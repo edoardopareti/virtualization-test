@@ -1,0 +1,49 @@
+egrep -c '(vmx|svm)' /proc/cpuinfo
+sudo apt install cpu-checker -y
+kvm-ok
+sudo apt install qemu-kvm libvirt-daemon-system virt-manager -y
+sudo systemctl status libvirtd
+virt-manager
+
+
+LINUX (x86):
+The process of creating a Linux-based guest should not require to access advanced options
+(everything should work with the 5 configuration default steps (choose the installation method, choose the ISO, set up RAM and CPU, setup VM storage, set the VM name) from the GUI).
+
+WINDOWS (note that this was tested using an AMD Ryzen 1500X CPU)
+From virt-manager (The KVM/QEMU GUI):
+In preferences: Enable XML editing
+Follow the 5 configuration steps (common for Linux install too), but before starting the VM enter the VM Details (Enable "Customize configuration before install") where you can set the following:
+Overview - Chipset (Virtualized MOBO chipset) : Q35 (more modern virtualized mobo chipset)
+Overview - Firmware: UEFI (UEFI is required for booting Windows 11)
+CPU Configuration: Disable "Copy host CPU configuration" (On some CPUs and OS like Windows, host-passthrough will result in an error at boot, so don't try to mimic the host's CPU configuration (model/family, features like the ISA, clock speed, cores and threads, cache size, security features, and capabilities like hardware-assisted virtualization support for the CPU and I/O operations) as closely as possible !) and select a suitable CPU model - EPYC (for AMD cpus).
+Download VirtIO (.iso) paradrivers (set of drivers designed for virtual machines to improve I/O performance by leveraging paravirtualization techniques -  Paravirtualization involves modifying the guest operating system to work more efficiently with the virtualization platform, making it aware that it is running in a virtualized environment. This awareness allows the guest OS to communicate more efficiently with the virtualization platform.)
+Add new device to the VM:
+Add hardware - Storage - Select or create custom storage - Device type: CDROM - Manage.. - Select the downloaded VirtIO.iso - This now is SATA CDROM2
+Remove the Tablet device
+Display : Select the Type "Spice Server", Listen Type: None, Enable OpenGL
+Video: Select the "VirtIO" model , Enable 3D acceleration
+TPM: Advanced options: select Model TIS and Version 2.0
+Now you have SATA Disk1, SATA CDROM1, SATA CDROM2. For SATA Disk 1 (the Vm storage disk) in Advanced options set Cache mode to none and Discard Mode to unmap.
+Boot Options: Put SATA CDROM1 (the disk with the operating system) before VirtIO Disk 1 (the storage disk) for first booting. Then after the OS is installed you'll be able to boot from SATA Disk 1 (you can again change the boot order putting SATA Disk 1 as the first boot option). Just notice that in Windows 11 a first step will create the required partitions and a second reboot will ask you to install Windows on the primary partition.
+At install Win11 requires network connection. To Bypass it, SHIFT(+FN)+F10 and type OOBE\BYPASSNRO. Then another rebooot will be performed but with the option of skipping the first network connection.
+To skip Microsoft Account access, log in with a@a.com with a random password.
+VirtualMachine - Redirect USB Device allow connection of USB devices to the Guest OS
+Networking configuration:
+Default option for newly created VM is NAT.
+All guest VM connected in the same NAT network can communicate (Windows VMs must have the Firewall disabled..)
+You can also connect your VM to a bridge network:
+SEEMS LIKE AN ETHERNET CABLE CONNECTION IS REQUIRED FOR THIS TO WORK
+sudo apt-get install bridge-utils 
+sudo brctl addbr br0
+sudo ip link set dev br0 up
+sudo ip addr add 192.168.0.230/24 dev br0
+
+
+SNAPSHOTS:
+Guest OS Snapshots can be created from virtual-manager, 
+via the Manage VM Snapshots icon. OS USING UEFI AS FIRMWARE (LIKE WINDOWS) MUST NOT BE RUNNING.
+In the lower left you can add snapshots, and you can select them.
+Then when you run the VM you'll run from that snapshot state.
+
+
