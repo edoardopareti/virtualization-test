@@ -50,6 +50,7 @@ Boot Options: Put SATA CDROM1 (the disk with the operating system) before VirtIO
 At install Win11 requires network connection. To Bypass it, SHIFT(+FN)+F10 and type OOBE\BYPASSNRO. Then another rebooot will be performed but with the option of skipping the first network connection.
 To skip Microsoft Account access, log in with a@a.com with a random password.
 VirtualMachine - Redirect USB Device allow connection of USB devices to the Guest OS
+
 Networking configuration:
 Default option for newly created VM is NAT. You can change the device model to virtio (after you installed the VirtIO driver inside the host machine)
 for better performance.
@@ -64,10 +65,25 @@ sudo ip addr add 192.168.0.230/24 dev br0
 When you're inside the Windows VM, go to the explore resources and then to the VirtIO.iso disk.
 You can install the VirtIO drivers via the .msi installer file.
 Then, reboot the system, go to display options and now you can select a different screen resolution.
+
 SNAPSHOTS:
 Guest OS Snapshots can be created from virtual-manager, 
 via the Manage VM Snapshots icon. OS USING UEFI AS FIRMWARE (LIKE WINDOWS) MUST NOT BE RUNNING.
 In the lower left you can add snapshots, and you can select them.
 Then when you run the VM you'll run from that snapshot state.
 
+GPU PASSTHROUGH:
+Current hardware configuration:
+CPU with an integrated graphic card (to be assigned to the host) --> AMD Ryzen 5 5600G
+A dedicated GPU (to be assigned to the guest OS) --> Nvidia GeForce GTX 1060 3GB
+MOBO: ASUS PRIME B350M-K
+
+First operations:
+First I needed to update the motherboard BIOS from v6002 to 6042 (to make it compatible with the CPU)
+For ASUS mobos, just download from asus.com and then copy in a formatted USB pendrive the .CAP file for v6042 (new bios/firmware) in your pendrive.
+Then, put it in the USB ports in the back of the PC, reboot the system and enter the BIOS. There, for this mobo
+model at least, go to Advamced Options, Tools and search for the BIOS Update section, select your drive and .CAP file and confirm 
+the BIOS update.
+At the end of the process I was greeted with a missing keyboard error, but substituting my wireless keyboard with a 
+wired one allowed me to procede to the new BIOS and then to the OS. Repeating the network connection was required.
 
