@@ -85,5 +85,7 @@ Then, put it in the USB ports in the back of the PC, reboot the system and enter
 model at least, go to Advamced Options, Tools and search for the BIOS Update section, select your drive and .CAP file and confirm 
 the BIOS update.
 At the end of the process I was greeted with a missing keyboard error, but substituting my wireless keyboard with a 
-wired one allowed me to procede to the new BIOS and then to the OS. Repeating the network connection was required.
+wired one allowed me to procede to the new BIOS and then to the OS.
+Remember to re-activate the CPU virtualization from the BIOS after the mobo firmware update (For AMD CPU, Enable SVM from Advanced options)
+Repeating the network connection was required.
 
