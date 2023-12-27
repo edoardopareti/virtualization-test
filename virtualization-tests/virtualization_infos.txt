@@ -32,14 +32,16 @@ Overview - Firmware: UEFI (UEFI is required for booting Windows 11)
 CPU Configuration: 
 IF YOU WANT TO EMULATE THE CPU
 Disable "Copy host CPU configuration (host-passthrough)" 
-(On some CPUs and OS like Windows, host-passthrough will result in an error at boot, so don't try to mimic the host's CPU configuration 
+(On some CPUs and OS like Windows, host-passthrough will result in an error at boot, so mimicking the host's CPU configuration 
 (model/family, features like the ISA, clock speed, cores and threads, cache size, security features, and capabilities 
-like hardware-assisted virtualization support for the CPU and I/O operations) as closely as possible !) and select a suitable CPU model - EPYC (for AMD cpus).
+like hardware-assisted virtualization support for the CPU and I/O operations) as closely as possible !) my yield an error. 
+So you can instead select a suitable CPU model - EPYC (for AMD cpus).
 BUT YOU CAN ALSO PASSTHROUGH THE CPU (RECOMMENDED) ON WINDOWS 11 WHILE AVOIDING THE WINDOWS BOOT ERROR ABOVE:
 Enable "Copy host CPU configuration (host-passthrough)"
 sudo -i
 echo "options kvm ignore_msrs=1" > /etc/modprobe.d/kvm.conf
 This allows GPU passthrough to Windows hosts when using an AMD processor!
+Then select "Manually Set CPU Topology", mimicking cores and threads of your CPU (socket will be probably 1 if you have a single processor)
 Download VirtIO (.iso) paradrivers 
 (set of drivers designed for virtual machines to improve I/O performance by leveraging paravirtualization techniques 
 -  Paravirtualization involves modifying the guest operating system to work more efficiently with the virtualization platform,
