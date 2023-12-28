@@ -65,11 +65,10 @@ Default option for newly created VM is NAT. You can change the device model to v
 for better performance.
 All guest VM connected in the same NAT network can communicate (Windows VMs must have the Firewall disabled..)
 You can also connect your VM to a bridge network:
-SEEMS LIKE AN ETHERNET CABLE CONNECTION IS REQUIRED FOR THIS TO WORK
-sudo apt-get install bridge-utils 
-sudo brctl addbr br0
-sudo ip link set dev br0 up
-sudo ip addr add 192.168.0.230/24 dev br0
+set the NIC as follows:
+Network source : Bridge device
+Device name: virbr0
+Device model: virtio
 
 When you're inside the Windows VM, go to the explore resources and then to the VirtIO.iso disk.
 You can install the VirtIO drivers via the .msi installer file.
