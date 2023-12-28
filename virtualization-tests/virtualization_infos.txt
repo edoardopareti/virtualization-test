@@ -1,7 +1,8 @@
 HOST: 
 TESTED ON UBUNTU 22.04 LTS
-The following was tested using an AMD Ryzen 1500X CPU for the host system.
-The host system also mounts a NVIDIA GTX1060 3GB
+The following was tested using the following CPUs for the host system:
+an AMD Ryzen 5 1500X (first) and a Ryzen 5 5600G (then) 
+The host system also mounts a NVIDIA GeForce GTX 1060 3GB
 
 CHECK IF HARDWARE ASSISTED VIRTUALIZATION IS ENABLED
 egrep -c '(vmx|svm)' /proc/cpuinfo
@@ -20,28 +21,31 @@ GUEST:
 
 LINUX (x86):
 The process of creating a Linux-based guest should not require to access advanced options, at least with an Ubuntu22.04 LTS distribution
-(everything should work with the 5 configuration default steps
+(everything should work with the 5 configuration default steps:
 (choose the installation method, choose the ISO, set up RAM and CPU, setup VM storage, set the VM name) from the GUI).
+You can however read also what follows to better configure your system.
 
 WINDOWS 11
 From virt-manager (The KVM/QEMU GUI):
 In preferences: Enable XML editing
-Follow the 5 configuration steps (common for Linux install too), but before starting the VM enter the VM Details (Enable "Customize configuration before install") where you can set the following:
-Overview - Chipset (Virtualized MOBO chipset) : Q35 (more modern virtualized mobo chipset)
+Follow the 5 configuration steps (common for Linux install too), but before starting the VM
+enter the VM Details (Enable "Customize configuration before install") where you can set the following:
+Overview - Chipset (Virtualized MOBO chipset. also called machine type) : Q35 (more modern virtualized mobo chipset)
 Overview - Firmware: UEFI (UEFI is required for booting Windows 11)
 CPU Configuration: 
-IF YOU WANT TO EMULATE THE CPU
+IF YOU WANT TO EMULATE THE CPU (like a type2 hypervisor)
 Disable "Copy host CPU configuration (host-passthrough)" 
 (On some CPUs and OS like Windows, host-passthrough will result in an error at boot, so mimicking the host's CPU configuration 
 (model/family, features like the ISA, clock speed, cores and threads, cache size, security features, and capabilities 
-like hardware-assisted virtualization support for the CPU and I/O operations) as closely as possible !) my yield an error. 
+like hardware-assisted virtualization support for the CPU and I/O operations) as closely as possible !) may yield an error. 
 So you can instead select a suitable CPU model - EPYC (for AMD cpus).
 BUT YOU CAN ALSO PASSTHROUGH THE CPU (RECOMMENDED) ON WINDOWS 11 WHILE AVOIDING THE WINDOWS BOOT ERROR ABOVE:
 Enable "Copy host CPU configuration (host-passthrough)"
 sudo -i
 echo "options kvm ignore_msrs=1" > /etc/modprobe.d/kvm.conf
-This allows GPU passthrough to Windows hosts when using an AMD processor!
-Then select "Manually Set CPU Topology", mimicking cores and threads of your CPU (socket will be probably 1 if you have a single processor)
+This allows direct CPU passthrough to Windows hosts when using an AMD processor, making effective use of the processor
+virtualization support and making the QEMU/KVM system very close to a bare metal type 1 hypervisor!
+Then select "Manually Set CPU Topology", mimicking cores and threads of your CPU (socket will be 1 as probably you have a single processor)
 Download VirtIO (.iso) paradrivers 
 (set of drivers designed for virtual machines to improve I/O performance by leveraging paravirtualization techniques 
 -  Paravirtualization involves modifying the guest operating system to work more efficiently with the virtualization platform,
@@ -52,7 +56,7 @@ Add new device to the VM:
 Add hardware - Storage - Select or create custom storage - Device type: CDROM - Manage.. - Select the downloaded VirtIO.iso - This now is SATA CDROM2
 Remove the Tablet device
 Display : Select the Type "Spice Server" for better performance or VNC if you access remotely to the host to use the VMs, Listen Type: None, Enable OpenGL
-Video: Select the "VirtIO" model , Enable 3D acceleration
+Video: Select the "VirtIO" model , Disable 3D acceleration
 TPM: Advanced options: select Model TIS and Version 2.0
 Now you have SATA Disk1, SATA CDROM1, SATA CDROM2. For SATA Disk 1 (the Vm storage disk) in Advanced options set Cache mode to none and Discard Mode to unmap.
 Boot Options: Put SATA CDROM1 (the disk with the operating system) before VirtIO Disk 1 (the storage disk) for first booting. Then after the OS is installed you'll be able to boot from SATA Disk 1 (you can again change the boot order putting SATA Disk 1 as the first boot option). Just notice that in Windows 11 a first step will create the required partitions and a second reboot will ask you to install Windows on the primary partition.
@@ -87,13 +91,16 @@ A dedicated GPU (to be assigned to the guest OS) --> Nvidia GeForce GTX 1060 3GB
 MOBO: ASUS PRIME B350M-K
 
 First operations:
-First I needed to update the motherboard BIOS from v6002 to 6042 (to make it compatible with the CPU)
+First I needed to update the motherboard BIOS from v6002 to 6042 (to make it compatible with the new CPU)
 For ASUS mobos, just download from asus.com and then copy in a formatted USB pendrive the .CAP file for v6042 (new bios/firmware) in your pendrive.
 Then, put it in the USB ports in the back of the PC, reboot the system and enter the BIOS. There, for this mobo
-model at least, go to Advamced Options, Tools and search for the BIOS Update section, select your drive and .CAP file and confirm 
+model at least, go to Advanced Options, Tools and search for the BIOS Update section, select your drive and .CAP file and confirm 
 the BIOS update.
 At the end of the process I was greeted with a missing keyboard error, but substituting my wireless keyboard with a 
 wired one allowed me to procede to the new BIOS and then to the OS.
 Remember to re-activate the CPU virtualization from the BIOS after the mobo firmware update (For AMD CPU, Enable SVM from Advanced options)
 Repeating the network connection was required.
+Then I replaced the CPU.
+Required to re-activate the CPU virtualization from the BIOS after the CPU replacement (For AMD CPU, Enable SVM from Advanced options)
+Repeating the network connection was also required.
 
