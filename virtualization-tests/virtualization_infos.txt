@@ -91,16 +91,17 @@ A dedicated GPU (to be assigned to the guest OS) --> Nvidia GeForce GTX 1060 3GB
 MOBO: ASUS PRIME B350M-K
 
 First operations:
-First I needed to update the motherboard BIOS from v6002 to 6042 (to make it compatible with the new CPU)
+First I needed to update the motherboard UEFI BIOS from v6002 to 6042 (to make it compatible with the new CPU)
 For ASUS mobos, just download from asus.com and then copy in a formatted USB pendrive the .CAP file for v6042 (new bios/firmware) in your pendrive.
-Then, put it in the USB ports in the back of the PC, reboot the system and enter the BIOS. There, for this mobo
-model at least, go to Advanced Options, Tools and search for the BIOS Update section, select your drive and .CAP file and confirm 
-the BIOS update.
+Then, put it in the USB ports in the back of the PC, reboot the system and enter the UEFI BIOS. There, for this mobo
+model at least, go to Advanced Options, Tools and search for the UEFI BIOS Update section, select your drive and .CAP file and confirm 
+the UEFI BIOS update.
 At the end of the process I was greeted with a missing keyboard error, but substituting my wireless keyboard with a 
-wired one allowed me to procede to the new BIOS and then to the OS.
-Remember to re-activate the CPU virtualization from the BIOS after the mobo firmware update (For AMD CPU, Enable SVM from Advanced options)
+wired one allowed me to procede to the new UEFI BIOS and then to the OS.
+Remember to re-activate the CPU virtualization from the UEFI BIOS after the mobo firmware update (For AMD CPU, Enable SVM from Advanced options)
 Repeating the network connection was required.
 Then I replaced the CPU.
-Required to re-activate the CPU virtualization from the BIOS after the CPU replacement (For AMD CPU, Enable SVM from Advanced options)
+Required to re-activate the CPU virtualization from the UEFI BIOS after the CPU replacement (For AMD CPU, Enable SVM from Advanced options)
 Repeating the network connection was also required.
+In UEFI BIOS also enabled IOMMU (couldnt find its location though, I searched it with the search bar)
 
