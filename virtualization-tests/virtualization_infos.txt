@@ -132,7 +132,7 @@ nvidia              56745984  105 nvidia_uvm,nvidia_modeset
 drm_kms_helper        249856  4 drm_display_helper,amdgpu,nvidia_drm
 drm                   700416  23 gpu_sched,drm_kms_helper,drm_display_helper,nvidia,drm_buddy,amdgpu,drm_ttm_helper,nvidia_drm,ttm
 video                  73728  3 asus_wmi,amdgpu,nvidia_modeset
-Which meand the drivers / kernel modules that handle the Nvidia GPUs are 
+Which means the drivers / kernel modules that handle the Nvidia GPUs are 
 nvidia_drm, nvidia_modeset, nvidia_uvm and nvidia.
 TODO enable IOMMU and update GRUB
 TODO Blacklist Nvidia drivers
