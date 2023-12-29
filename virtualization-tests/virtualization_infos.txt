@@ -119,3 +119,22 @@ returns
 Which means PCi device with address 01:00.0 (GeForce GTX 1060 3GB) belongs to IOMMU group 11
 while PCi device with address 09:00.0 ([AMD/ATI] Cezanne) belongs to IOMMU group 9
 so they are in different groups and one of them can be dedicated to a VM without affecting the other.
+Command 
+lspci -k | grep -A 2 VGA  
+also gives you a list of the drivers used by the GPUs.
+A complete driver list can be obtained running (for nvidia gpus) running
+lsmod | grep -i nvidia
+Which in my case returns
+nvidia_uvm           1781760  0
+nvidia_drm             94208  3
+nvidia_modeset       1314816  3 nvidia_drm
+nvidia              56745984  105 nvidia_uvm,nvidia_modeset
+drm_kms_helper        249856  4 drm_display_helper,amdgpu,nvidia_drm
+drm                   700416  23 gpu_sched,drm_kms_helper,drm_display_helper,nvidia,drm_buddy,amdgpu,drm_ttm_helper,nvidia_drm,ttm
+video                  73728  3 asus_wmi,amdgpu,nvidia_modeset
+Which meand the drivers / kernel modules that handle the Nvidia GPUs are 
+nvidia_drm, nvidia_modeset, nvidia_uvm and nvidia.
+TODO enable IOMMU and update GRUB
+TODO Blacklist Nvidia drivers
+TODO Configure VFIO
+TODO Modify VMs xml files to allow GPU passthrough
