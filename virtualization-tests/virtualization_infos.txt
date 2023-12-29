@@ -104,4 +104,8 @@ Then I replaced the CPU.
 Required to re-activate the CPU virtualization from the UEFI BIOS after the CPU replacement (For AMD CPU, Enable SVM from Advanced options)
 Repeating the network connection was also required.
 In UEFI BIOS also enabled IOMMU (couldnt find its location though, I searched it with the search bar)
-
+The system need to be able to use both the integrated and the dedicated GPU: in the UEFI BIOS (ASUS)
+Advanced - NB Configuration - IGFX Multi-Monitor - Enable
+In the host os now running lspci you should be able to see 2 VGA controllers, one being the integrated and one the dedicated GPU.
+Executing check_iommu.sh allows you to see the PCi devices IOMMU groups (the smallest set of physical devices that can be passed
+to a virtual machine)
