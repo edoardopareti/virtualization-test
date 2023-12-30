@@ -140,7 +140,55 @@ drm                   700416  23 gpu_sched,drm_kms_helper,drm_display_helper,nvi
 video                  73728  3 asus_wmi,amdgpu,nvidia_modeset
 Which means the drivers / kernel modules that handle the Nvidia GPUs are 
 nvidia_drm, nvidia_modeset, nvidia_uvm and nvidia.
-TODO enable IOMMU and update GRUB
+Enable IOMMU and update GRUB:
+IOMMU must be enabled on your system. To do this, you have to modify the 
+/etc/default/grub file with
+sudo nano /etc/default/grub
+and add or modify the line with GRUB_CMDLINE_LINUX 
+to include amd_iommu=on or intel_iommu=on, depending on your processor. 
+Then 
+sudo update-grub 
+to effectively update GRUB bootloader configuration file
+(This file is typically located at /boot/grub/grub.cfg).
+----
+EXPLANATION: When the BIOS UEFI mobo firmware is executed, it searches for 
+booitable devices which must have a bootloader program (in a dedicated boot sector,
+which may be part of a boot partition of an hard disk) which is in charge of loading
+the operating system kernel (which is included in the OS image that must be as well
+inside a device to be defined as "bootable"..).
+So the bootloader is a program that searches and loads in memory another program (the kernel),
+so it can be executed. A typical bootloader for Linux distros is GRUB.
+You can specify some command-line options that will be passed
+to the Linux kernel when a system boots using the GRUB bootloader.
+The GRUB_CMDLINE_LINUX variable allows you to configure various parameters related to the kernel
+and the initial ramdisk (initrd).
+IOMMU is an hardware component (phisycally present on the CPU, 
+but the motherboard must have a chipset that supports it)
+that provides memory and IO (Input/Output) address translation.
+Its primary function is to map virtual addresses used by devices in a system
+to physical addresses, allowing for efficient and secure communication
+between the CPU, memory, and I/O devices.
+IOMMU (Input-Output Memory Management Unit) is required for GPU passthrough in virtualization
+to provide the ability for a virtual machine (VM) to directly access and control a physical GPU. 
+Without IOMMU support, the hypervisor (virtualization software) would not be able 
+to efficiently assign a dedicated GPU to a virtual machine due to certain limitations:
+-there would be no hardware support for memory address translation and mapping,
+which is essential for isolating the memory space of the GPU assigned to the VM:
+The VM and the host system would share the same physical memory address space, making it difficult 
+to isolate and protect the memory regions used by the GPU. 
+This lack of isolation can lead to security vulnerabilities and potential data corruption.
+-GPUs use DMA to transfer data directly to and from system memory.
+Without IOMMU, there would be no efficient way to control and isolate these DMA transactions.
+DMA transactions initiated by the GPU would not be properly translated and isolated, 
+potentially leading to data leakage, unauthorized access to system memory, or corruption of data.
+Without IOMMU support, the hypervisor would have difficulty in assigning a dedicated GPU directly to a VM.
+Device assignment would be limited to emulated or virtualized GPU solutions,
+which are typically slower and have reduced capabilities compared to direct GPU passthrough.
+---
+now run 
+dmesg | grep -i -e DMAR -e IOMMU
+And you should see some stuff (having no output means your hardware desnt support iommu)
+
 TODO Blacklist Nvidia drivers
 TODO Configure VFIO
 TODO Modify VMs xml files to allow GPU passthrough
