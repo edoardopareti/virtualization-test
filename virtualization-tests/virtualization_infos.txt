@@ -106,6 +106,12 @@ Repeating the network connection was also required.
 In UEFI BIOS also enabled IOMMU (couldnt find its location though, I searched it with the search bar)
 The system need to be able to use both the integrated and the dedicated GPU: in the UEFI BIOS (ASUS)
 Advanced - NB Configuration - IGFX Multi-Monitor - Enable
+BE CAREFUL THAT DOING THIS I WASNT ABLE ANYMORE TO ACCESS THE BIOS: I COULD ONLY SEE THE OS ONCE BOOTED.
+I WAS CONNECTED WITH A SINGLE MONITOR TO THE DEDICATED GPU OUTPUT, SO APPARENTELY WITH THIS NEW SETUP 
+THE INTEGRATED GRAPHICS WAS DETECTED BUT COULDN'T BE USED SINCE THE SWITCH TO DEDICATED GPU WAS PERFORMED 
+AFTER BOOT. SO EVERYTHING BEFORE THE BOOTING AND AFTER THE SHUTDOWN WAS LOST. TO RECOVER THIS I CONNECTED ONE
+MONITOR TO THE MOTHERBOARD AND ONE TO THE NVIDIA GPU, SO NOW THE INTEGRATED GRAPHICS HANDLES ONE MONITOR AND THE
+DEDICATED ONE IS USED ON THE SECOND MONITOR. SO NOW BIOS CAN BE ACCESSED AGAIN, AT LEAST ON THE MOBO MONITOR.
 In the host os now running lspci you should be able to see 2 VGA controllers, one being the integrated and one the dedicated GPU.
 Executing check_iommu.sh allows you to see the PCi devices IOMMU groups (the smallest set of physical devices that can be passed
 to a virtual machine) > in my case, running it I obtain:
