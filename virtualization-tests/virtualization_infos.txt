@@ -84,7 +84,7 @@ via the Manage VM Snapshots icon. OS USING UEFI AS FIRMWARE (LIKE WINDOWS) MUST 
 In the lower left you can add snapshots, and you can select them.
 Then when you run the VM you'll run from that snapshot state.
 
-GPU PASSTHROUGH:
+GPU PASSTHROUGH --> https://wiki.archlinux.org/title/PCI_passthrough_via_OVMF , https://ubuntu.com/server/docs/gpu-virtualization-with-qemu-kvm:
 Current hardware configuration:
 CPU with an integrated graphic card (to be assigned to the host) --> AMD Ryzen 5 5600G
 A dedicated GPU (to be assigned to the guest OS) --> Nvidia GeForce GTX 1060 3GB
@@ -128,6 +128,8 @@ so they are in different groups and one of them can be dedicated to a VM without
 Command 
 lspci -k | grep -A 2 VGA  
 also gives you a list of the drivers used by the GPUs.
+you can also run
+lspci -nnk
 A complete driver list can be obtained running (for nvidia gpus) running
 lsmod | grep -i nvidia
 Which in my case returns
@@ -187,8 +189,119 @@ which are typically slower and have reduced capabilities compared to direct GPU 
 ---
 now run 
 dmesg | grep -i -e DMAR -e IOMMU
-And you should see some stuff (having no output means your hardware desnt support iommu)
+And you should see some stuff (having no output means your hardware desnt support iommu.. and thats bad)
 
-TODO Blacklist Nvidia drivers
-TODO Configure VFIO
-TODO Modify VMs xml files to allow GPU passthrough
+ISOLATING A GPU
+In order to assign a device to a virtual machine, this device and all those sharing the same IOMMU group 
+must have their driver replaced by a stub driver or a VFIO driver in order to prevent the host machine from interacting with them.
+However, you cannot perform this substitution while the host system is using the GPU:
+due to their size and complexity, GPU drivers do not tend to support dynamic rebinding very well, 
+so you cannot simply have some GPU you use on the host be transparently passed to a virtual machine
+without having both drivers conflict with each other.
+Because of this, it is generally advised to bind those placeholder drivers manually
+before starting the virtual machine, in order to stop other drivers from attempting to claim it.
+So now we have to configure a GPU so those placeholder drivers are bound early during the boot process,
+which makes said device inactive until a virtual machine claims it or the driver is switched back.
+In my case, since 
+lspci -nnk
+returns
+01:00.0 VGA compatible controller [0300]: NVIDIA Corporation GP106 [GeForce GTX 1060 3GB] [10de:1c02] (rev a1)
+	Subsystem: NVIDIA Corporation GP106 [GeForce GTX 1060 3GB] [10de:1c02]
+	Kernel driver in use: nvidia
+	Kernel modules: nvidiafb, nouveau, nvidia_drm, nvidia
+09:00.0 VGA compatible controller [0300]: Advanced Micro Devices, Inc. [AMD/ATI] Cezanne [1002:1638] (rev c9)
+	Subsystem: ASUSTeK Computer Inc. Cezanne [1043:8809]
+	Kernel driver in use: amdgpu
+	Kernel modules: amdgpu
+It means that NVIDIA GPU is using "nvidia" driver.
+We have to replace this with a vfio-pci driver for GPU passthrough to work.
+Vfio-pci normally targets PCI devices by ID, meaning you only need to specify the IDs of the devices you intend to passthrough.
+So you find the devices by IOMMU ID and assign them a vfio driver to make the device effectively unaccessible by the host.
+First of all, run the script to get the IOMMU groups and find your GPU devices:
+IOMMU Group 11 09:00.0 VGA compatible controller [0300]: Advanced Micro Devices, Inc. [AMD/ATI] Cezanne [1002:1638] (rev c9)
+IOMMU Group 9 01:00.0 VGA compatible controller [0300]: NVIDIA Corporation GP106 [GeForce GTX 1060 3GB] [10de:1c02] (rev a1)
+IOMMU Group 9 01:00.1 Audio device [0403]: NVIDIA Corporation GP106 High Definition Audio Controller [10de:10f1] (rev a1)
+To pass your device id, you have 2 options:
+1 - Modify as done above the GRUB_CMDLINE_LINUX in the file /etc/default/grub
+sudo nano /etc/default/grub
+by appending the following (in my case), to isolate both the GPU and its audio controller
+vfio-pci.ids=10de:1c02,10de:10f1
+then
+sudo update-grub
+2 - the IDs may be added to a modprobe conf file (create new or modify existing one)
+sudo nano /etc/modprobe.d/vfio.conf
+add a line:
+options vfio-pci ids=10de:1c02,10de:10f1
+EXPLANATION: /etc/modprobe.d is a Linux directory that contains
+configuration files to control the automatic loading and unloading of kernel modules using the modprobe command
+Vfio framework is composed by kernel modules, 
+so you have to load them dynamically in the running Linux kernel to assign vfio drivers to your hardware devices.
+To load the kerlem modules taking into account the new modifications of the modprobe configuration files:
+sudo modprobe vfio
+sudo modprobe vfio_pci
+In this way, the configuration in vfio.conf is applied during the system's initialization process,
+specifically when kernel modules are loaded.
+then you also need to update the initramfs image
+sudo update-initramfs -u
+Initramfs (initial RAM filesystem) is a temporary filesystem that is loaded into memory
+(by the grub bootloader) during the initial boot process before the root filesystem is mounted.
+It is used to perform essential tasks required to initialize the system
+and prepare it for the transition to the actual root filesystem.
+The kernel then executes the initramfs to perform the necessary tasks before transitioning
+to the root filesystem, allowing the full operating system to start.
+In particular, it is used to load necessary kernel modules 
+or drivers required for the operation of critical hardware components.
+After you chose the approach you prefer (I chose n° 1), reboot the system.
+After you asked for loading the vfio-pci kernel module at kernel reboot,
+you should perform an additional step to force this module to load 
+before the graphics drivers have a chance to bind to the card:
+in file 
+sudo nano /etc/modprobe.d/vfio.conf
+add a line:
+softdep drm pre: vfio-pci
+then again
+sudo modprobe vfio
+sudo modprobe vfio_pci
+sudo update-initramfs -u
+ALTERNATIVE METHODS NOT FOR UBUNTU
+You have 3 choices:
+1 - in /etc/mkinitcpio.conf, add MODULES=(... vfio_pci vfio vfio_iommu_type1 ...) and HOOKS=(... modconf ...)
+2 - in /etc/booster.yaml , add modules_force_load: vfio_pci,vfio,vfio_iommu_type1
+3 - in /etc/dracut.conf.d/10-vfio.conf, add force_drivers+=" vfio_pci vfio vfio_iommu_type1 "
+mkinitcpio, booster and dracut are tools or systems used in different Linux distributions
+to create and manage the initial ramdisk (initramfs)
+then reboot
+ON UBUNTU 22.04, THE METHOD THAT WORKED WAS TO USE MODPROBE WITH FILE VFIO.CONF
+Now after reboot only the display connected to the integrated graphics (so to the video output
+ports of the mobo) works, in fact running
+lspci -nnk
+returns, for the NVIDIA GPU and audio device:
+01:00.0 VGA compatible controller [0300]: NVIDIA Corporation GP106 [GeForce GTX 1060 3GB] [10de:1c02] (rev a1)
+	Subsystem: NVIDIA Corporation GP106 [GeForce GTX 1060 3GB] [10de:1c02]
+	Kernel driver in use: vfio-pci
+	Kernel modules: nvidiafb, nouveau, nvidia_drm, nvidia
+01:00.1 Audio device [0403]: NVIDIA Corporation GP106 High Definition Audio Controller [10de:10f1] (rev a1)
+	Subsystem: NVIDIA Corporation GP106 High Definition Audio Controller [10de:1c02]
+	Kernel driver in use: vfio-pci
+	Kernel modules: snd_hda_intel
+So they are effectively isolated since it is using the vfio-pci driver.
+
+CONFIGURE VM TO ALLOW GPU PASSTHROUGH
+Since my output for command 
+lspci | grep VGA
+was
+01:00.0 VGA compatible controller: NVIDIA Corporation GP106 [GeForce GTX 1060 3GB] (rev a1)
+I edited the Windows11 .xml file adding, inside <devices> section, the following subsections:
+<hostdev mode='subsystem' type='pci' managed='yes'>
+  <driver name='vfio'/>
+  <source>
+    <address domain='0x0000' bus='0x01' slot='0x00' function='0x0'/>
+  </source>
+  <address type='pci' domain='0x0000' bus='0x01' slot='0x00' function='0x0'/>
+</hostdev>
+
+My virbr0 network bridge is also a pci device with the same ID of my graphic card:
+So I changed the bus='0x01' for virbr0 to bus='0x11' (i still have network connection on the guest)
+On the guest Windows 11 I uninstalled the NVIDIA graphic drivers and reinstalled the latest ones (546.33)
+and I was finally able to get a graphic output to display 2, and the Nvidia GTX 1060 is correctly 
+detected by the guest system.
