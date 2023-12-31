@@ -305,3 +305,4 @@ So I changed the bus='0x01' for virbr0 to bus='0x11' (i still have network conne
 On the guest Windows 11 I uninstalled the NVIDIA graphic drivers and reinstalled the latest ones (546.33)
 and I was finally able to get a graphic output to display 2, and the Nvidia GTX 1060 is correctly 
 detected by the guest system.
+Notice that in the display I needed QXL and not virtio to access the second screen.
