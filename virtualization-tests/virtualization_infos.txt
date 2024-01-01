@@ -24,6 +24,21 @@ The process of creating a Linux-based guest should not require to access advance
 (everything should work with the 5 configuration default steps:
 (choose the installation method, choose the ISO, set up RAM and CPU, setup VM storage, set the VM name) from the GUI).
 You can however read also what follows to better configure your system.
+It may be useful on linux based systems to uninstall the secure boot. To do this, in the overview section of virt-manager
+as firmware, select the OVMF_CODE_4M.fd (an open source implementation of the UEFI firmware) and in the XML in the <os> section, add a secure="no",
+so you should have something like
+<loader readonly="yes" secure="no" type="pflash">/usr/share/OVMF/OVMF_CODE_4M.fd</loader>
+Then when you'll be inside your VM, check with
+mokutil --sb
+that the secure boot is effectively removed.
+Also blacklisting some GPU drivers (nouveau) on the guest may be needed:
+sudo nano /etc/modprobe.d/blacklist-nouveau.conf
+Add following lines:
+blacklist nouveau
+options nouveau modeset=0
+Update and reboot system:
+sudo update-initramfs -u
+sudo reboot nowe
 
 WINDOWS 11
 From virt-manager (The KVM/QEMU GUI):
