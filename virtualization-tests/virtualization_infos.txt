@@ -321,3 +321,14 @@ On the guest Windows 11 I uninstalled the NVIDIA graphic drivers and reinstalled
 and I was finally able to get a graphic output to display 2, and the Nvidia GTX 1060 is correctly 
 detected by the guest system.
 Notice that in the display I needed QXL and not virtio to access the second screen.
+
+OFFTOPIC - VMWARE WORKSTATION PLAYER HYPERVISOR
+When using VMWare WOrkstation Player 17 as the hypervisor,
+there is a bug.. at least with Ubuntu 22.04.
+Sometimes you create virtual machines to which no usb devices can be connected.
+To solve this, shut down the vm and 
+go the folder of the vm and search for its configuration file (.vmx).
+Search for a line
+usb.restrictions.defaultAllow = "FALSE"
+And delete it. save the file and restart the VM. Now you can connect the usb devices.
+
