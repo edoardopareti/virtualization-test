@@ -4,6 +4,17 @@ The following was tested using the following CPUs for the host system:
 an AMD Ryzen 5 1500X (first) and a Ryzen 5 5600G (then) 
 The host system also mounts a NVIDIA GeForce GTX 1060 3GB
 
+SOLVE STUCK AT BOOT WITH BLACKLISTING HASH (-13) ERROR:
+This issue can occour when installing Ubuntu (in my case, 22.04 LTS): 
+The presence of uncompatible kernel graphical drivers with the Nvidia GPU will lead you stuck 
+with this obnoxious error after choosing TRY/INSTALL Ubuntu in GRUB.
+For this kind of uncompatibility problems, the SAFE GRAPHICS mode on GRUB must be instead selected.
+Now you'll be able to boot inside Ubuntu and install it from your bootable USB drive.
+BUT BEWARE: if you do not install the NVIDIA graphical drivers during the installation, 
+at system reboot you'll be back to the blacklisting error.
+So you have to connect to a Internet and install the Nvidia Drivers, either via the Ubuntu GUI installation wizard 
+or via the terminal (open the terminal session with CTRL+ALT+T ,then ubuntu-drivers install).
+
 CHECK IF HARDWARE ASSISTED VIRTUALIZATION IS ENABLED
 egrep -c '(vmx|svm)' /proc/cpuinfo
 CHECK IF KVM KERNEL MODULE IS READY
