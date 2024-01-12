@@ -26,7 +26,7 @@ sudo apt install qemu-kvm libvirt-daemon-system virt-manager -y
 CHECK IF APIS ARE RUNNING
 sudo systemctl status libvirtd
 START VIRT-MANAGER
-virt-manager
+sudo virt-manager
 
 GUEST:
 
@@ -49,7 +49,8 @@ blacklist nouveau
 options nouveau modeset=0
 Update and reboot system:
 sudo update-initramfs -u
-sudo reboot nowe
+sudo reboot now
+When working on linux guest VMs, keeping the Tablet device in the VM hardware will keep alignment between the hjost and guest mouse pointers.
 
 WINDOWS 11
 From virt-manager (The KVM/QEMU GUI):
@@ -89,6 +90,7 @@ Boot Options: Put SATA CDROM1 (the disk with the operating system) before VirtIO
 At install Win11 requires network connection. To Bypass it, SHIFT(+FN)+F10 and type OOBE\BYPASSNRO. Then another rebooot will be performed but with the option of skipping the first network connection.
 To skip Microsoft Account access, log in with a@a.com with a random password.
 VirtualMachine - Redirect USB Device allow connection of USB devices to the Guest OS
+You can also add hardware like USB devices to passthrough devices like WIFi usb pendrives.
 
 Networking configuration:
 Default option for newly created VM is NAT. You can change the device model to virtio (after you installed the VirtIO driver inside the host machine)
