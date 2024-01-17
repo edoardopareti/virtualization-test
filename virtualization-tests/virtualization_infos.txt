@@ -109,6 +109,8 @@ On a Windows system (with no virtio drivers installed however..) I had no intern
 My solution was to directly connect to the wired ethernet network using the mavtap driver and then connecting the guest to internet via WiFi 
 (On Ubuntu Guest I was able to access the internet with no problems with wired connection,
 provided the authentication on the firewall was performed)
+Devices directly connected to the network via wired connection will be able to be detected, both by the host and the guest.
+Host and guest connection seems to be not working in both ways.
 
 When you're inside the Windows VM, go to the explore resources and then to the VirtIO.iso disk.
 You can install the VirtIO drivers via the .msi installer file.
