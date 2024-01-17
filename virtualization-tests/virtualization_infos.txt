@@ -102,6 +102,14 @@ Network source : Bridge device
 Device name: virbr0
 Device model: virtio
 
+IF YOU WANT TO CONNECT YOUR VM TO THE HOST NETWORK AND COMMUNICATE WITH OTHER DEVICES IN THE HOST NETWORK 
+In Virtual Network Interface: select Macvtap device as Network Source
+As device name, select the name of your host physical network adapter (es. enp2s0, can find it via ifconfig -all command)
+On a Windows system (with no virtio drivers installed however..) I had no internet connection.
+My solution was to directly connect to the wired ethernet network using the mavtap driver and then connecting the guest to internet via WiFi 
+(On Ubuntu Guest I was able to access the internet with no problems with wired connection,
+provided the authentication on the firewall was performed)
+
 When you're inside the Windows VM, go to the explore resources and then to the VirtIO.iso disk.
 You can install the VirtIO drivers via the .msi installer file.
 Then, reboot the system, go to display options and now you can select a different screen resolution.
