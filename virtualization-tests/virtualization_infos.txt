@@ -1,8 +1,15 @@
 HOST: 
+
 TESTED ON UBUNTU 22.04 LTS
 The following was tested using the following CPUs for the host system:
-an AMD Ryzen 5 1500X (first) and a Ryzen 5 5600G (then) 
-The host system also mounts a NVIDIA GeForce GTX 1060 3GB
+an AMD Ryzen 5 1500X, a Ryzen 5 5600G, an Intel(R) Core(TM) i9-13900.
+Get hardware info on Ubuntu using
+sudo lshw 
+or
+sudo dmidecode -t 2 (mobo)
+Tested on host systems mounting a NVIDIA GeForce GTX 1060 3GB, a NVIDIA GeForce RTX 4060
+Get info on NVIDIA hardware with 
+nvidia-smi
 
 SOLVE STUCK AT BOOT WITH BLACKLISTING HASH (-13) ERROR:
 This issue can occour when installing Ubuntu (in my case, 22.04 LTS): 
@@ -15,9 +22,14 @@ at system reboot you'll be back to the blacklisting error.
 So you have to connect to a Internet and install the Nvidia Drivers, either via the Ubuntu GUI installation wizard 
 or via the terminal (open the terminal session with CTRL+ALT+T ,then ubuntu-drivers install).
 
-CHECK IF HARDWARE ASSISTED VIRTUALIZATION IS ENABLED
-egrep -c '(vmx|svm)' /proc/cpuinfo
+CHECK IF HARDWARE ASSISTED VIRTUALIZATION IS ENABLED FOR THE CPU
+Hardware assisted virtualization: CPU technology that enables efficient full virtualization using help from hardware capabilities.
+Intel uses VMX, AMD uses SVM. If supported by your CPU, it must be enabled via the BIOS.
+You can get all info about your CPU with cat /proc/cpuinfo.
+Or just search for the flags you're interested into with egrep -c '(vmx|svm)' /proc/cpuinfo --> if >0, it means that hardware assisted virtualization is enabled
+
 CHECK IF KVM KERNEL MODULE IS READY
+KVM: Linux kernel module (low level) that transforms Linux systems into type 1 hypervisors (bare metal), enabling running of full VMs as separated processes.
 sudo apt install cpu-checker -y
 kvm-ok
 INSTALL REQUIRED DEPENDANCIES:
@@ -35,6 +47,7 @@ The process of creating a Linux-based guest should not require to access advance
 (everything should work with the 5 configuration default steps:
 (choose the installation method, choose the ISO, set up RAM and CPU, setup VM storage, set the VM name) from the GUI).
 You can however read also what follows to better configure your system.
+
 It may be useful on linux based systems to uninstall the secure boot. To do this, in the overview section of virt-manager
 as firmware, select the OVMF_CODE_4M.fd (an open source implementation of the UEFI firmware) and in the XML in the <os> section, add a secure="no",
 so you should have something like
@@ -42,6 +55,7 @@ so you should have something like
 Then when you'll be inside your VM, check with
 mokutil --sb
 that the secure boot is effectively removed.
+
 Also blacklisting some GPU drivers (nouveau) on the guest may be needed:
 sudo nano /etc/modprobe.d/blacklist-nouveau.conf
 Add following lines:
@@ -53,6 +67,7 @@ sudo reboot now
 When working on linux guest VMs, keeping the Tablet device in the VM hardware will keep alignment between the hjost and guest mouse pointers.
 
 WINDOWS 11
+
 From virt-manager (The KVM/QEMU GUI):
 In preferences: Enable XML editing
 Follow the 5 configuration steps (common for Linux install too), but before starting the VM
@@ -124,9 +139,9 @@ Then when you run the VM you'll run from that snapshot state.
 
 GPU PASSTHROUGH --> https://wiki.archlinux.org/title/PCI_passthrough_via_OVMF , https://ubuntu.com/server/docs/gpu-virtualization-with-qemu-kvm:
 Current hardware configuration:
-CPU with an integrated graphic card (to be assigned to the host) --> AMD Ryzen 5 5600G
-A dedicated GPU (to be assigned to the guest OS) --> Nvidia GeForce GTX 1060 3GB
-MOBO: ASUS PRIME B350M-K
+CPU with an integrated graphic card (to be assigned to the host) --> AMD Ryzen 5 5600G / Intel(R) Core(TM) i9-13900
+A dedicated GPU (to be assigned to the guest OS) --> Nvidia GeForce GTX 1060 3GB / NVIDIA GeForce RTX 4060
+MOBO: ASUS PRIME B350M-K / HP 8AC1
 
 First operations:
 First I needed to update the motherboard UEFI BIOS from v6002 to 6042 (to make it compatible with the new CPU)
@@ -141,7 +156,9 @@ Repeating the network connection was required.
 Then I replaced the CPU.
 Required to re-activate the CPU virtualization from the UEFI BIOS after the CPU replacement (For AMD CPU, Enable SVM from Advanced options)
 Repeating the network connection was also required.
-In UEFI BIOS also enabled IOMMU (couldnt find its location though, I searched it with the search bar)
+
+In UEFI BIOS also enabled IOMMU (on ASUS mobo couldnt find its location though, I searched it with the search bar)
+
 The system need to be able to use both the integrated and the dedicated GPU: in the UEFI BIOS (ASUS)
 Advanced - NB Configuration - IGFX Multi-Monitor - Enable
 BE CAREFUL THAT DOING THIS I WASNT ABLE ANYMORE TO ACCESS THE BIOS: I COULD ONLY SEE THE OS ONCE BOOTED.
@@ -150,9 +167,13 @@ THE INTEGRATED GRAPHICS WAS DETECTED BUT COULDN'T BE USED SINCE THE SWITCH TO DE
 AFTER BOOT. SO EVERYTHING BEFORE THE BOOTING AND AFTER THE SHUTDOWN WAS LOST. TO RECOVER THIS I CONNECTED ONE
 MONITOR TO THE MOTHERBOARD AND ONE TO THE NVIDIA GPU, SO NOW THE INTEGRATED GRAPHICS HANDLES ONE MONITOR AND THE
 DEDICATED ONE IS USED ON THE SECOND MONITOR. SO NOW BIOS CAN BE ACCESSED AGAIN, AT LEAST ON THE MOBO MONITOR.
-In the host os now running lspci you should be able to see 2 VGA controllers, one being the integrated and one the dedicated GPU.
+In the host os now running
+lspci | grep VGA
+you should be able to see 2 VGA controllers, one being the integrated and one the dedicated GPU.
 Executing check_iommu.sh allows you to see the PCi devices IOMMU groups (the smallest set of physical devices that can be passed
-to a virtual machine) > in my case, running it I obtain:
+to a virtual machine) > in my case, running 
+check_iommu.sh | grep VGA
+I obtain:
 IOMMU Group 11 09:00.0 VGA compatible controller [0300]: Advanced Micro Devices, Inc. [AMD/ATI] Cezanne [1002:1638] (rev c9)
 IOMMU Group 9 01:00.0 VGA compatible controller [0300]: NVIDIA Corporation GP106 [GeForce GTX 1060 3GB] [10de:1c02] (rev a1)
 while running 
@@ -163,6 +184,9 @@ returns
 Which means PCi device with address 01:00.0 (GeForce GTX 1060 3GB) belongs to IOMMU group 11
 while PCi device with address 09:00.0 ([AMD/ATI] Cezanne) belongs to IOMMU group 9
 so they are in different groups and one of them can be dedicated to a VM without affecting the other.
+IF YOU HAVE A SINGLE IOMMU GROUP NAMED * FOR ALL DEVICES WHEN RUNNING "./check_iommu.sh", IT MEANS
+THAT IOMMU IS NOT ENABLED SO CHECK THE FOLLOWING SECTION TO ENABLE IOMMU. 
+
 Command 
 lspci -k | grep -A 2 VGA  
 also gives you a list of the drivers used by the GPUs.
@@ -180,6 +204,7 @@ drm                   700416  23 gpu_sched,drm_kms_helper,drm_display_helper,nvi
 video                  73728  3 asus_wmi,amdgpu,nvidia_modeset
 Which means the drivers / kernel modules that handle the Nvidia GPUs are 
 nvidia_drm, nvidia_modeset, nvidia_uvm and nvidia.
+
 Enable IOMMU and update GRUB:
 IOMMU must be enabled on your system. To do this, you have to modify the 
 /etc/default/grub file with
@@ -190,9 +215,10 @@ Then
 sudo update-grub 
 to effectively update GRUB bootloader configuration file
 (This file is typically located at /boot/grub/grub.cfg).
+
 ----
 EXPLANATION: When the BIOS UEFI mobo firmware is executed, it searches for 
-booitable devices which must have a bootloader program (in a dedicated boot sector,
+bootable devices which must have a bootloader program (in a dedicated boot sector,
 which may be part of a boot partition of an hard disk) which is in charge of loading
 the operating system kernel (which is included in the OS image that must be as well
 inside a device to be defined as "bootable"..).
@@ -226,12 +252,26 @@ Device assignment would be limited to emulated or virtualized GPU solutions,
 which are typically slower and have reduced capabilities compared to direct GPU passthrough.
 ---
 now run 
-dmesg | grep -i -e DMAR -e IOMMU
+sudo dmesg | grep -i -e DMAR -e IOMMU
 And you should see some stuff (having no output means your hardware desnt support iommu.. and thats bad)
 
 ISOLATING A GPU
 In order to assign a device to a virtual machine, this device and all those sharing the same IOMMU group 
 must have their driver replaced by a stub driver or a VFIO driver in order to prevent the host machine from interacting with them.
+
+WHAT IS VFIO: 
+VFIO, or Virtual Function I/O, is a Linux kernel subsystem / module that provides an IOMMU/device agnostic framework 
+for exposing direct device access to userspace applications and virtual machines,enabling them to interact with hardware devices at a low level.
+VFIO is particularly useful in virtualization environments, where it allows virtual machines to use physical devices, 
+such as graphics cards and network interfaces, with near-native performance.
+The main purpose of VFIO is to provide secure and efficient access to hardware devices for userspace processes and virtual machines,
+while maintaining isolation between them. This is achieved through features such as IOMMU (Input/Output Memory Management Unit)
+and device assignment, which enable fine-grained control over the resources allocated to each virtual machine or process.
+VFIO is commonly used in conjunction with QEMU (Quick Emulator) and KVM (Kernel-based Virtual Machine) 
+to enable hardware-accelerated virtualization on Linux systems.
+ By using VFIO, virtual machines can take advantage of hardware features 
+ and achieve performance levels similar to those of native applications running directly on the host system.
+
 However, you cannot perform this substitution while the host system is using the GPU:
 due to their size and complexity, GPU drivers do not tend to support dynamic rebinding very well, 
 so you cannot simply have some GPU you use on the host be transparently passed to a virtual machine
@@ -252,20 +292,22 @@ returns
 	Kernel driver in use: amdgpu
 	Kernel modules: amdgpu
 It means that NVIDIA GPU is using "nvidia" driver.
-We have to replace this with a vfio-pci driver for GPU passthrough to work.
+We have to replace this graphic driver with a vfio-pci (a dummy/stub driver) for GPU passthrough to work.
 Vfio-pci normally targets PCI devices by ID, meaning you only need to specify the IDs of the devices you intend to passthrough.
 So you find the devices by IOMMU ID and assign them a vfio driver to make the device effectively unaccessible by the host.
 First of all, run the script to get the IOMMU groups and find your GPU devices:
 IOMMU Group 11 09:00.0 VGA compatible controller [0300]: Advanced Micro Devices, Inc. [AMD/ATI] Cezanne [1002:1638] (rev c9)
 IOMMU Group 9 01:00.0 VGA compatible controller [0300]: NVIDIA Corporation GP106 [GeForce GTX 1060 3GB] [10de:1c02] (rev a1)
 IOMMU Group 9 01:00.1 Audio device [0403]: NVIDIA Corporation GP106 High Definition Audio Controller [10de:10f1] (rev a1)
-To pass your device id, you have 2 options:
+To pass your device id, you have 2 options (USE METHOD 2):
+
 1 - Modify as done above the GRUB_CMDLINE_LINUX in the file /etc/default/grub
 sudo nano /etc/default/grub
 by appending the following (in my case), to isolate both the GPU and its audio controller
 vfio-pci.ids=10de:1c02,10de:10f1
 then
 sudo update-grub
+
 2 - the IDs may be added to a modprobe conf file (create new or modify existing one)
 sudo nano /etc/modprobe.d/vfio.conf
 add a line:
@@ -274,7 +316,7 @@ EXPLANATION: /etc/modprobe.d is a Linux directory that contains
 configuration files to control the automatic loading and unloading of kernel modules using the modprobe command
 Vfio framework is composed by kernel modules, 
 so you have to load them dynamically in the running Linux kernel to assign vfio drivers to your hardware devices.
-To load the kerlem modules taking into account the new modifications of the modprobe configuration files:
+To load the kernel modules taking into account the new modifications of the modprobe configuration files:
 sudo modprobe vfio
 sudo modprobe vfio_pci
 In this way, the configuration in vfio.conf is applied during the system's initialization process,
@@ -289,7 +331,8 @@ The kernel then executes the initramfs to perform the necessary tasks before tra
 to the root filesystem, allowing the full operating system to start.
 In particular, it is used to load necessary kernel modules 
 or drivers required for the operation of critical hardware components.
-After you chose the approach you prefer (I chose n° 1), reboot the system.
+
+After you chose the approach you prefer (I chose n° 2), reboot the system.
 After you asked for loading the vfio-pci kernel module at kernel reboot,
 you should perform an additional step to force this module to load 
 before the graphics drivers have a chance to bind to the card:
@@ -301,6 +344,7 @@ then again
 sudo modprobe vfio
 sudo modprobe vfio_pci
 sudo update-initramfs -u
+
 ALTERNATIVE METHODS NOT FOR UBUNTU
 You have 3 choices:
 1 - in /etc/mkinitcpio.conf, add MODULES=(... vfio_pci vfio vfio_iommu_type1 ...) and HOOKS=(... modconf ...)
@@ -309,7 +353,9 @@ You have 3 choices:
 mkinitcpio, booster and dracut are tools or systems used in different Linux distributions
 to create and manage the initial ramdisk (initramfs)
 then reboot
+
 ON UBUNTU 22.04, THE METHOD THAT WORKED WAS TO USE MODPROBE WITH FILE VFIO.CONF
+
 Now after reboot only the display connected to the integrated graphics (so to the video output
 ports of the mobo) works, in fact running
 lspci -nnk
