@@ -1,13 +1,13 @@
 HOST: 
 
-TESTED ON UBUNTU 22.04 LTS
+TESTED ON UBUNTU 22.04 LTS / 24.04 LTS
 The following was tested using the following CPUs for the host system:
-an AMD Ryzen 5 1500X, a Ryzen 5 5600G, an Intel(R) Core(TM) i9-13900.
+an AMD Ryzen 5 1500X, a Ryzen 5 5600G, an Intel(R) Core(TM) i9-13900, Ryzen 9 7950x.
 Get hardware info on Ubuntu using
 sudo lshw 
 or
 sudo dmidecode -t 2 (mobo)
-Tested on host systems mounting a NVIDIA GeForce GTX 1060 3GB, a NVIDIA GeForce RTX 4060
+Tested on host systems mounting a NVIDIA GeForce GTX 1060 3GB, a NVIDIA GeForce RTX 4060, a NVIDIA GeForce RTX 4060 Ti
 Get info on NVIDIA hardware with 
 nvidia-smi
 
@@ -21,6 +21,11 @@ BUT BEWARE: if you do not install the NVIDIA graphical drivers during the instal
 at system reboot you'll be back to the blacklisting error.
 So you have to connect to a Internet and install the Nvidia Drivers, either via the Ubuntu GUI installation wizard 
 or via the terminal (open the terminal session with CTRL+ALT+T ,then ubuntu-drivers install).
+
+NOVEAU DEVICE ERROR:
+If you are prompted with a Noveau device not found error, you'll have to install Nvidia graphic drivers.
+You can install the OS relying on the integratred graphics (enable from BIOS and switch video cable from GPU to motherboard)
+and then install the drivers and switch your monitor back from motherboard to GPU
 
 CHECK IF HARDWARE ASSISTED VIRTUALIZATION IS ENABLED FOR THE CPU
 Hardware assisted virtualization: CPU technology that enables efficient full virtualization using help from hardware capabilities.
@@ -40,10 +45,21 @@ sudo systemctl status libvirtd
 START VIRT-MANAGER
 sudo virt-manager
 
+BUG IN VIRT-MANAGER
+When running virt-manager doing sudo virt-manager (since it wont connect to libvirt deamon otherwise)
+you may notice you cannot change settings (settings changes will not be saved at reopen of virt-manager).
+If you run
+sudo virt-manager --debug
+you may see
+Failed to execute child process “dbus-launch” (No such file or directory)
+To fix this
+sudo apt install dbus-x11
+Now you can open and reopen, keeping settings changes saved.
+
 GUEST:
 
 LINUX (x86):
-The process of creating a Linux-based guest should not require to access advanced options, at least with an Ubuntu22.04 LTS distribution
+The process of creating a Linux-based guest should not require to access advanced options, at least with an Ubuntu22.04 / 24.04 LTS distribution
 (everything should work with the 5 configuration default steps:
 (choose the installation method, choose the ISO, set up RAM and CPU, setup VM storage, set the VM name) from the GUI).
 You can however read also what follows to better configure your system.
@@ -64,7 +80,7 @@ options nouveau modeset=0
 Update and reboot system:
 sudo update-initramfs -u
 sudo reboot now
-When working on linux guest VMs, keeping the Tablet device in the VM hardware will keep alignment between the hjost and guest mouse pointers.
+When working on linux guest VMs, keeping the Tablet device in the VM hardware will keep alignment between the host and guest mouse pointers.
 
 WINDOWS 11
 
@@ -103,7 +119,7 @@ TPM: Advanced options: select Model TIS and Version 2.0
 Now you have SATA Disk1, SATA CDROM1, SATA CDROM2. For SATA Disk 1 (the Vm storage disk) in Advanced options set Cache mode to none and Discard Mode to unmap.
 Boot Options: Put SATA CDROM1 (the disk with the operating system) before VirtIO Disk 1 (the storage disk) for first booting. Then after the OS is installed you'll be able to boot from SATA Disk 1 (you can again change the boot order putting SATA Disk 1 as the first boot option). Just notice that in Windows 11 a first step will create the required partitions and a second reboot will ask you to install Windows on the primary partition.
 At install Win11 requires network connection. To Bypass it, SHIFT(+FN)+F10 and type OOBE\BYPASSNRO. Then another rebooot will be performed but with the option of skipping the first network connection.
-To skip Microsoft Account access, log in with a@a.com with a random password.
+To skip Microsoft Account access, log in with a@a.com with a random password (2024 - IT DOESNT WORK ANYMORE....).
 VirtualMachine - Redirect USB Device allow connection of USB devices to the Guest OS
 You can also add hardware like USB devices to passthrough devices like WIFi usb pendrives.
 
@@ -139,12 +155,12 @@ Then when you run the VM you'll run from that snapshot state.
 
 GPU PASSTHROUGH --> https://wiki.archlinux.org/title/PCI_passthrough_via_OVMF , https://ubuntu.com/server/docs/gpu-virtualization-with-qemu-kvm:
 Current hardware configuration:
-CPU with an integrated graphic card (to be assigned to the host) --> AMD Ryzen 5 5600G / Intel(R) Core(TM) i9-13900
-A dedicated GPU (to be assigned to the guest OS) --> Nvidia GeForce GTX 1060 3GB / NVIDIA GeForce RTX 4060
-MOBO: ASUS PRIME B350M-K / HP 8AC1
+CPU with an integrated graphic card (to be assigned to the host) --> AMD Ryzen 5 5600G / Intel(R) Core(TM) i9-13900 / Ryzen 9 7950x.
+A dedicated GPU (to be assigned to the guest OS) --> Nvidia GeForce GTX 1060 3GB / NVIDIA GeForce RTX 4060 / NVIDIA GeForce RTX 4060 Ti
+MOBO: ASUS PRIME B350M-K / HP 8AC1 / ASUS ROG STRIX B650E-F WiFi
 
 First operations:
-First I needed to update the motherboard UEFI BIOS from v6002 to 6042 (to make it compatible with the new CPU)
+First I needed to update the motherboard UEFI BIOS from v6002 to 6042 (to make it compatible with the new CPU - on ASUS PRIME B350M using CPU AMD Ryzen 5 5600G )
 For ASUS mobos, just download from asus.com and then copy in a formatted USB pendrive the .CAP file for v6042 (new bios/firmware) in your pendrive.
 Then, put it in the USB ports in the back of the PC, reboot the system and enter the UEFI BIOS. There, for this mobo
 model at least, go to Advanced Options, Tools and search for the UEFI BIOS Update section, select your drive and .CAP file and confirm 
@@ -167,6 +183,7 @@ THE INTEGRATED GRAPHICS WAS DETECTED BUT COULDN'T BE USED SINCE THE SWITCH TO DE
 AFTER BOOT. SO EVERYTHING BEFORE THE BOOTING AND AFTER THE SHUTDOWN WAS LOST. TO RECOVER THIS I CONNECTED ONE
 MONITOR TO THE MOTHERBOARD AND ONE TO THE NVIDIA GPU, SO NOW THE INTEGRATED GRAPHICS HANDLES ONE MONITOR AND THE
 DEDICATED ONE IS USED ON THE SECOND MONITOR. SO NOW BIOS CAN BE ACCESSED AGAIN, AT LEAST ON THE MOBO MONITOR.
+
 In the host os now running
 lspci | grep VGA
 you should be able to see 2 VGA controllers, one being the integrated and one the dedicated GPU.
@@ -339,7 +356,12 @@ before the graphics drivers have a chance to bind to the card:
 in file 
 sudo nano /etc/modprobe.d/vfio.conf
 add a line:
-softdep drm pre: vfio-pci
+softdep drm pre: vfio-pci -> check if required
+softdep nvidia pre: vfio-pci
+softdep nvidiafb pre: vfio-pci
+softdep nouveau pre: vfio-pci
+softdep nvidia_drm pre: vfio-pci
+softdep snd_hda_intel pre: vfio-pci-> check if required
 then again
 sudo modprobe vfio
 sudo modprobe vfio_pci
