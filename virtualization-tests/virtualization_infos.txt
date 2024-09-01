@@ -413,8 +413,26 @@ and I was finally able to get a graphic output to display 2, and the Nvidia GTX 
 detected by the guest system.
 Notice that in the display I needed QXL and not virtio to access the second screen.
 
+VIDEO ISSUES:
+be careful the refresh rate on the OS side and the monitor itself are matched. 
+Aim for ax refresh rate on the monitor and adjust in display settings of OS.
+
+DUAL MONITOR AND LINUX BASED GUESTS:
+You may experience a bug with dual monitor config and Linux based OS.
+In particular the display server of the guest OS may not be properly configured.
+If you go to /etc/X11 (assuming your display server is X11 and not wayland) you should have a xorg.conf file
+This file should probably be created automatically based on you settings on Linux systems, but on Guest OS for some reason it is not creted apparentely.
+This apparentely leads to no video output on monitor directly conencted to GPU.
+Assuming NVIDIA GPU, you would see that nvidia-settings correctly detects the physical monitor but the os only sees a virtual monitor.
+To fix this run:
+nvidia-xconfig
+This will automatically create a xorg.conf file in /etc/X11 and now at reboot the second monitor should be detected (only the second monitor).
+You can modify this newly created file manually to fit your screen configuration.
+More on this should be explored.
+For single monitor config, check out looking glass project for high-performance frame buffering.
+
 OFFTOPIC - VMWARE WORKSTATION PLAYER HYPERVISOR
-When using VMWare WOrkstation Player 17 as the hypervisor,
+When using VMWare Workstation Player 17 as the hypervisor,
 there is a bug.. at least with Ubuntu 22.04.
 Sometimes you create virtual machines to which no usb devices can be connected.
 To solve this, shut down the vm and 
